@@ -1,0 +1,12 @@
+[package]
+name = "rust_sms"
+version = "0.1.0"
+authors = ["Ziggypop <zimhen7@gmail.com>"]
+
+[dependencies]
+rocket = "0.3.0"
+rocket_codegen = "0.3.0"
+twilio = "*"
+dotenv = "0.10.1"
+regex = "0.2.2"
+percent-encoding = "1.0.0"
