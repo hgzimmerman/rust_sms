@@ -117,8 +117,9 @@ fn main() {
     let client = create_client();
 //    send_message(client, "this is a test".to_string(), "+18472871920");
     let mut state: State = State::StartState;
-    state = state.next(Event::BoatAttendanceInternalRequest {message: &"do you want to do event at $time?".to_string(), client: &client});
-
+    let mut message: Option<String>;
+    let (state, message) = state.next(Event::BoatAttendanceInternalRequest {message: &"do you want to do event at time?".to_string()});
+    send_message(&client, message.unwrap(), "+18472871920");
 
     rocket::ignite()
         .manage(client)

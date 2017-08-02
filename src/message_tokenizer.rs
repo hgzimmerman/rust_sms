@@ -11,7 +11,7 @@ pub enum Event<'a> {
     HelpRequest,
     CancellationRequestInitiation,
     ChangeGroupsRequest,
-    BoatAttendanceInternalRequest {message: &'a String, client: &'a Client}, // sent by the system, do not parse input to this event.
+    BoatAttendanceInternalRequest {message: &'a String}, // sent by the system, do not parse input to this event.
     Reminder {message: &'a String}
 }
 
@@ -54,32 +54,29 @@ pub enum State {
 }
 
 impl State {
-    pub fn next(self, event: Event) -> State {
+    pub fn next(self, event: Event) -> (State, Option<String>) {
         use Event::*;
         use State::*;
         match (self, event) {
-            (StartState, BoatAttendanceInternalRequest {message: m, client: c}) => {
-                twilio_client_wrapper::send_message(c, m.clone(), "+18472871920");
-                AwaitingEventConfirmationState
+            (StartState, BoatAttendanceInternalRequest {message: m}) => {
+                (AwaitingEventConfirmationState, Some(m.clone()))
             },
             (AwaitingEventConfirmationState, Confirmation) => {
                 //Add user to event
-                //Let user know they are confirmed
-                StartState
+                (StartState, Some("You have confirmed for $event".to_string()) )
             },
             (AwaitingEventConfirmationState, Declination) => {
                 //Let user know they have declined
-                StartState
+                (StartState, Some("You have declined the invitation for $event".to_string()) )
             },
-
 
             (_, HelpRequest) => {
                 // send help message.
-                self
+                (self, Some("help message".to_string()))
             }
             _ => {
                 // Let user know they had invalid input.
-                self
+                (self, Some("Invalid input".to_string()))
             }
         }
     }
