@@ -16,6 +16,12 @@ use rocket::Outcome::*;
 use std::io::Read;
 use regex::Regex;
 
+mod message_tokenizer;
+use message_tokenizer::*;
+
+mod twilio_client_wrapper;
+use twilio_client_wrapper::*;
+
 
 struct SimpleTwimlMessage {
     from: String,
@@ -23,36 +29,7 @@ struct SimpleTwimlMessage {
     message: String,
 }
 
-fn create_client() -> twilio::Client {
-    // Get the account ID
-    let account_id_key = "TWILIO_ACCOUNT_SID";
-    let account_id: String =  match dotenv::var(account_id_key) {
-        Ok(val) => val,
-        Err(_) => panic!("{} is not defined in the environment.", account_id_key)
-    };
-    // Get the auth token
-    let auth_token_key = "TWILIO_AUTH_TOKEN";
-    let auth_token: String = match dotenv::var(auth_token_key) {
-        Ok(val) => val,
-        Err(_) => panic!("{} is not defined in the environment.", auth_token_key)
-    };
-    //create the client
-    twilio::Client::new(account_id.as_str(),auth_token.as_str())
-}
 
-fn send_message(client: twilio::Client, message: String, recepient: &str) {
-    let phone_number_key = "TWILIO_PHONE_NUMBER";
-    let phone_number: String = match dotenv::var(phone_number_key) {
-        Ok(val) => val,
-        Err(_) => panic!("{} is not defined in the environment.", phone_number_key)
-    };
-    let outbound_message: twilio::OutboundMessage = twilio::OutboundMessage {
-        body : message.as_str(),
-        from: phone_number.as_str(),
-        to: recepient
-    };
-    let _ = client.send_message(outbound_message);
-}
 
 #[get("/")]
 fn index() -> &'static str {
@@ -62,7 +39,20 @@ fn index() -> &'static str {
 #[post("/sms", data = "<input>" )]
 fn sms(input: SimpleTwimlMessage) -> String {
     print!("/sms");
-    input.message + input.from.as_str() + input.to.as_str()
+    let token: Event = tokenize_input(input.message);
+
+    //temporary
+    let formatted_input: String = match token {
+        Event::RawInput{ raw_input : i } => {
+           i.clone()
+        },
+        Event::Confirmation => {
+            "The user confirmed the thing".to_string()
+        },
+        _ => "the user did something else".to_string()
+    };
+
+    formatted_input + input.from.as_str() + input.to.as_str()
 }
 
 
@@ -126,6 +116,10 @@ fn main() {
 
     let client = create_client();
 //    send_message(client, "this is a test".to_string(), "+18472871920");
+    let mut state: State = State::StartState;
+    state = state.next(Event::BoatAttendanceInternalRequest {message: &"do you want to do event at $time?".to_string(), client: &client});
+
+
     rocket::ignite()
         .manage(client)
         .mount("/", routes![index, sms])
