@@ -2,6 +2,8 @@ extern crate dotenv;
 extern crate twilio;
 use twilio::Client;
 
+use user::User;
+
 
 pub fn create_client() -> twilio::Client {
     // Get the account ID
@@ -32,4 +34,8 @@ pub fn send_message(client: &twilio::Client, message: String, recepient: &str) {
         to: recepient
     };
     let _ = client.send_message(outbound_message);
+}
+
+pub fn send_message_to_user(client: &twilio::Client, message: String, user: User) {
+    send_message(client, message, user.phone_number.as_str())
 }

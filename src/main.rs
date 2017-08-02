@@ -22,6 +22,9 @@ use message_tokenizer::*;
 mod twilio_client_wrapper;
 use twilio_client_wrapper::*;
 
+mod user;
+use user::User;
+
 
 struct SimpleTwimlMessage {
     from: String,
