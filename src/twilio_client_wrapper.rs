@@ -22,7 +22,7 @@ pub fn create_client() -> twilio::Client {
     twilio::Client::new(account_id.as_str(),auth_token.as_str())
 }
 
-pub fn send_message(client: &twilio::Client, message: String, recepient: &str) {
+fn send_message(client: &twilio::Client, message: String, recepient: &str) {
     let phone_number_key = "TWILIO_PHONE_NUMBER";
     let phone_number: String = match dotenv::var(phone_number_key) {
         Ok(val) => val,
@@ -36,6 +36,6 @@ pub fn send_message(client: &twilio::Client, message: String, recepient: &str) {
     let _ = client.send_message(outbound_message);
 }
 
-pub fn send_message_to_user(client: &twilio::Client, message: String, user: User) {
+pub fn send_message_to_user(client: &twilio::Client, message: String, user: &User) {
     send_message(client, message, user.phone_number.as_str())
 }

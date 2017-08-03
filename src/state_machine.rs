@@ -1,7 +1,4 @@
 extern crate twilio;
-use twilio::Client;
-use twilio_client_wrapper;
-use std::boxed::Box;
 
 #[derive( Clone)]
 pub enum Event<'a> {

@@ -16,14 +16,17 @@ use rocket::Outcome::*;
 use std::io::Read;
 use regex::Regex;
 
-mod message_tokenizer;
-use message_tokenizer::*;
+mod state_machine;
+use state_machine::*;
 
 mod twilio_client_wrapper;
 use twilio_client_wrapper::*;
 
 mod user;
 use user::User;
+
+mod event;
+mod resource;
 
 
 struct SimpleTwimlMessage {
@@ -62,7 +65,7 @@ fn sms(input: SimpleTwimlMessage) -> String {
 impl rocket::data::FromData for SimpleTwimlMessage {
     type Error = String;
 
-    fn from_data(request: &Request, data: Data) -> data::Outcome<Self, Self::Error> {
+    fn from_data(_: &Request, data: Data) -> data::Outcome<Self, Self::Error> {
         // Read the data into a String.
         let mut string = String::new();
         if let Err(e) = data.open().read_to_string(&mut string) {
@@ -118,11 +121,10 @@ fn convert_twilio_gsm7_to_utf8(input: String) -> String {
 fn main() {
 
     let client = create_client();
-//    send_message(client, "this is a test".to_string(), "+18472871920");
-    let mut state: State = State::StartState;
-    let mut message: Option<String>;
-    let (state, message) = state.next(Event::BoatAttendanceInternalRequest {message: &"do you want to do event at time?".to_string()});
-    send_message(&client, message.unwrap(), "+18472871920");
+    let mut user_henry: User = User::new("Henry".to_string(), "Zimmerman".to_string(), "+18472871920".to_string());
+    let (new_state, message) = user_henry.state.next(Event::BoatAttendanceInternalRequest {message: &"do you want to do event at time?".to_string()});
+    user_henry.state = new_state;
+    send_message_to_user(&client, message.unwrap(), &user_henry);
 
     rocket::ignite()
         .manage(client)
