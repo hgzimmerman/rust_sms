@@ -1,5 +1,6 @@
 use state_machine::State;
 
+#[derive( Clone)]
 enum Group {
     PreNovice,
     Novice,
@@ -10,8 +11,9 @@ enum Group {
     Private
 }
 
+#[derive( Clone)]
 pub struct User {
-    id: i32,
+    pub id: i32,
     first_name: String,
     last_name: String,
     pub phone_number: String, // TODO create a phone number type?
@@ -30,6 +32,10 @@ impl User {
             groups: Vec::new(),
             state: State::StartState,
         }
+    }
+
+    pub fn set_state(&mut self, new_state: State) {
+        self.state = new_state
     }
 
 }

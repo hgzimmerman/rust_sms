@@ -1,4 +1,5 @@
-
+#![feature(const_fn)]
+#![feature(drop_types_in_const)] //Needed to have a statically accessible db connection
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
 
@@ -7,6 +8,8 @@ extern crate twilio;
 extern crate dotenv;
 extern crate regex;
 extern crate percent_encoding;
+#[macro_use]
+extern crate lazy_static;
 
 
 use rocket::{Request, Data };
@@ -15,6 +18,7 @@ use rocket::http::{Status};
 use rocket::Outcome::*;
 use std::io::Read;
 use regex::Regex;
+use std::sync::Mutex;
 
 mod state_machine;
 use state_machine::*;
@@ -27,7 +31,19 @@ use user::User;
 
 mod event;
 mod resource;
+mod db_handle;
+mod user_store;
+use db_handle::{DB_HANDLE, DbHandle};
+use user_store::MockUserStore;
 
+lazy_static! {
+    pub static ref USERS: Mutex<Vec<User>> =  {
+        let mut v = Vec::new();
+        let user_henry: User = User::new("Henry".to_string(), "Zimmerman".to_string(), "+18472871920".to_string());
+        v.push(user_henry);
+        return Mutex::new(v);
+    };
+}
 
 struct SimpleTwimlMessage {
     from: String,
@@ -45,14 +61,14 @@ fn index() -> &'static str {
 #[post("/sms", data = "<input>" )]
 fn sms(input: SimpleTwimlMessage) -> String {
     print!("/sms");
-    let token: Event = tokenize_input(input.message);
+    let token: EventToken = tokenize_input(input.message);
 
     //temporary
     let formatted_input: String = match token {
-        Event::RawInput{ raw_input : i } => {
+        EventToken::RawInput{ raw_input : i } => {
            i.clone()
         },
-        Event::Confirmation => {
+        EventToken::Confirmation => {
             "The user confirmed the thing".to_string()
         },
         _ => "the user did something else".to_string()
@@ -119,15 +135,36 @@ fn convert_twilio_gsm7_to_utf8(input: String) -> String {
 
 
 fn main() {
-
     let client = create_client();
-    let mut user_henry: User = User::new("Henry".to_string(), "Zimmerman".to_string(), "+18472871920".to_string());
-    let (new_state, message) = user_henry.state.next(Event::BoatAttendanceInternalRequest {message: &"do you want to do event at time?".to_string()});
-    user_henry.state = new_state;
-    send_message_to_user(&client, message.unwrap(), &user_henry);
+    let mut user_store = MockUserStore::init();
+    {
+        let mut new_henry_user = User::new("".to_string(), "".to_string(), "".to_string()); //Initialize to empty user.
+        {
+            let mut henry_user = user_store.get_user_by_phone_number("+18472871920".to_string()).unwrap();
+
+            let (new_state, message) = user_store
+                .get_user_by_phone_number("+18472871920".to_string()).unwrap()
+                .state
+                .next(EventToken::BoatAttendanceInternalRequest { message: &"do you want to do event at time?".to_string() });
+
+            send_message_to_user(&client, message.unwrap(), henry_user);
+
+            new_henry_user = henry_user.clone();
+            new_henry_user.set_state(new_state);
+        }
+
+        user_store.update_user(&new_henry_user);
+
+
+        //    //check what state it has
+        let mut user_henry = user_store.get_user_by_phone_number("+18472871920".to_string()).unwrap();
+        println!("{:?}", user_henry.state);
+    }
+
 
     rocket::ignite()
         .manage(client)
+        .manage(user_store)
         .mount("/", routes![index, sms])
         .launch();
 }

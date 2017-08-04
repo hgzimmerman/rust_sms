@@ -37,5 +37,6 @@ fn send_message(client: &twilio::Client, message: String, recepient: &str) {
 }
 
 pub fn send_message_to_user(client: &twilio::Client, message: String, user: &User) {
-    send_message(client, message, user.phone_number.as_str())
+    send_message(client, message, user.phone_number.as_str());
+    println!("sent message");
 }
