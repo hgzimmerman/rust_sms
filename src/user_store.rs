@@ -54,18 +54,4 @@ impl <'a> MockUserStore{
 }
 
 
-//Forget this, just fucking pass the state around :/
-lazy_static! {
-    pub static ref USER_STORE: Mutex<MockUserStore> =  {
-        let mut s = MockUserStore::new();
-        let user_henry: User = User::new("Henry".to_string(), "Zimmerman".to_string(), "+18472871920".to_string()); // insert some test data
-        s.insert(user_henry);
-        return Mutex::new(s);
-    };
-}
-
-pub fn get_user_store<'a>() -> MutexGuard<'a, MockUserStore> {
-    println!("getting user store");
-    USER_STORE.try_lock().unwrap()
-}
 

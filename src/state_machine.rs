@@ -1,7 +1,7 @@
 extern crate twilio;
 
 use user_store::MockUserStore;
-use user::User;
+use user::{User, UserBuilder};
 use twilio_client_wrapper::SimpleTwimlMessage;
 
 #[derive( Clone)]
@@ -50,14 +50,15 @@ pub fn tokenize_input<'a>(input: String) -> EventToken<'a> {
 
 
 /// SmState is shorthand for State-Machine State, distinguishing it from Rocket's 'State'
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum SmState {
     StartState,
     AwaitingEventConfirmationState,
     ConfirmingCancellationState,
     AwaitingFirstNameState,
     AwaitingLastNameState,
-    ConfirmingNameState
+    ConfirmingNameState,
+    NewUserState {provisional_user: UserBuilder}
 }
 
 impl SmState {
@@ -65,7 +66,7 @@ impl SmState {
     pub fn next(self, event: EventToken, user_store: &mut MockUserStore) -> (SmState, Option<String>) {
         use EventToken::*;
         use SmState::*;
-        match (self, event) {
+        match (self.clone(), event) {
             (StartState, BoatAttendanceInternalRequest {message: m}) => {
                 (AwaitingEventConfirmationState, Some(m.clone()))
             },
@@ -91,21 +92,21 @@ impl SmState {
                             // Cancel the event
                             (StartState, Some("You have canceled $event.".to_string()))
                         } else {
-                            (self, Some("You aren't attending an event with that number.".to_string()))
+                            (self.clone(), Some("You aren't attending an event with that number.".to_string()))
                         }
                     },
                     Err(_) => {
-                        (self, Some("Please enter a valid number.".to_string()))
+                        (self.clone(), Some("Please enter a valid number.".to_string()))
                     }
                 }
             }
             (_, HelpRequest) => {
                 // send help message.
-                (self, Some("help message".to_string()))
+                (self.clone(), Some("help message".to_string()))
             },
             _ => {
                 // Let user know they had invalid input.
-                (self, Some("Invalid input".to_string()))
+                (self.clone(), Some("Invalid input".to_string()))
             }
         }
     }
@@ -125,7 +126,7 @@ impl SmState {
 
         let token: EventToken = tokenize_input(twim.message);
 
-        let (new_state, message) = user.state.next(token, &mut user_store); // Consider moving this into a fn in User
+        let (new_state, message) = user.clone().state.next(token, &mut user_store); // Consider moving this into a fn in User
         let mut user = user;
         user.set_state(new_state);
         user_store.update_user(&user);

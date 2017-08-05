@@ -44,6 +44,7 @@ fn index() -> &'static str {
 fn sms(input: SimpleTwimlMessage, mut user_store: State<Mutex<MockUserStore>>) -> String {
     print!("/sms");
 
+    //The lock here will prevent other posts to /sms from being processed until this action ends, dropping the lock.
     state_machine::SmState::handle_input(input, &mut user_store.lock().unwrap())
 }
 
@@ -59,7 +60,7 @@ fn main() {
             let mut henry_user = user_store.clone().get_user_by_phone_number("+18472871920").unwrap().clone(); // This is _really_ ugly (2 clones to avoid the borrow checker, one of which should be expensive)
 
             let (new_state, message) = user_store
-                .get_user_by_phone_number("+18472871920").unwrap()
+                .get_user_by_phone_number("+18472871920").unwrap().clone()
                 .state
                 .next(EventToken::BoatAttendanceInternalRequest { message: &"do you want to do event at time?".to_string() }, &mut user_store);
 
