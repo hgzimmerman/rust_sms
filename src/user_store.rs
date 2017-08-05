@@ -32,9 +32,9 @@ impl <'a> MockUserStore{
         return None;
     }
 
-    pub fn get_user_by_phone_number(&self, phone_number: String) -> Option<&User> {
+    pub fn get_user_by_phone_number(&self, phone_number: &str) -> Option<&User> {
         for user in &self.users {
-            if user.phone_number == phone_number {
+            if user.phone_number.as_str() == phone_number {
                 return Some(user);
             }
         }

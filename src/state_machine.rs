@@ -1,5 +1,9 @@
 extern crate twilio;
 
+use user_store::MockUserStore;
+use user::User;
+use twilio_client_wrapper::SimpleTwimlMessage;
+
 #[derive( Clone)]
 pub enum EventToken<'a> {
     RawInput { raw_input: String },
@@ -44,8 +48,10 @@ pub fn tokenize_input<'a>(input: String) -> EventToken<'a> {
     }
 }
 
+
+/// SmState is shorthand for State-Machine State, distinguishing it from Rocket's 'State'
 #[derive(Debug, Clone, Copy)]
-pub enum State {
+pub enum SmState {
     StartState,
     AwaitingEventConfirmationState,
     ConfirmingCancellationState,
@@ -54,10 +60,11 @@ pub enum State {
     ConfirmingNameState
 }
 
-impl State {
-    pub fn next(self, event: EventToken) -> (State, Option<String>) {
+impl SmState {
+    //Consider making this take the SimpleTwimlMessage, and extracting the token from that
+    pub fn next(self, event: EventToken, user_store: &mut MockUserStore) -> (SmState, Option<String>) {
         use EventToken::*;
-        use State::*;
+        use SmState::*;
         match (self, event) {
             (StartState, BoatAttendanceInternalRequest {message: m}) => {
                 (AwaitingEventConfirmationState, Some(m.clone()))
@@ -103,8 +110,31 @@ impl State {
         }
     }
 
+
+    pub fn handle_input(twim: SimpleTwimlMessage, mut user_store: &mut MockUserStore) -> String {
+        let empty_user = User::empty();
+        // bad because this clones the store, and then the found user :/
+        let user: User = match user_store.clone().get_user_by_phone_number( &twim.from ) {
+            Some(found_user) => found_user.clone(),
+            None => {
+                println!("Didn't find user for phone number: {}", twim.from);
+                empty_user
+            }
+        };
+
+
+        let token: EventToken = tokenize_input(twim.message);
+
+        let (new_state, message) = user.state.next(token, &mut user_store); // Consider moving this into a fn in User
+        let mut user = user;
+        user.set_state(new_state);
+        user_store.update_user(&user);
+
+        message.unwrap()
+    }
+
     pub fn alt_next(mut self, event: EventToken) -> Option<String> {
-        self = State::AwaitingEventConfirmationState;
+        self = SmState::AwaitingEventConfirmationState;
         Some("You have confirmed".to_string())
     }
 }

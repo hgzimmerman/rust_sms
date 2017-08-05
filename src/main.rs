@@ -12,12 +12,10 @@ extern crate percent_encoding;
 extern crate lazy_static;
 
 
-use rocket::{Request, Data };
+use rocket::{Request, Data, State };
 use rocket::data::{self};
 use rocket::http::{Status};
-use rocket::Outcome::*;
 use std::io::Read;
-use regex::Regex;
 use std::sync::Mutex;
 
 mod state_machine;
@@ -36,22 +34,6 @@ mod user_store;
 use db_handle::{DB_HANDLE, DbHandle};
 use user_store::MockUserStore;
 
-lazy_static! {
-    pub static ref USERS: Mutex<Vec<User>> =  {
-        let mut v = Vec::new();
-        let user_henry: User = User::new("Henry".to_string(), "Zimmerman".to_string(), "+18472871920".to_string());
-        v.push(user_henry);
-        return Mutex::new(v);
-    };
-}
-
-struct SimpleTwimlMessage {
-    from: String,
-    to: String,
-    message: String,
-}
-
-
 
 #[get("/")]
 fn index() -> &'static str {
@@ -59,76 +41,10 @@ fn index() -> &'static str {
 }
 
 #[post("/sms", data = "<input>" )]
-fn sms(input: SimpleTwimlMessage) -> String {
+fn sms(input: SimpleTwimlMessage, mut user_store: State<Mutex<MockUserStore>>) -> String {
     print!("/sms");
-    let token: EventToken = tokenize_input(input.message);
 
-    //temporary
-    let formatted_input: String = match token {
-        EventToken::RawInput{ raw_input : i } => {
-           i.clone()
-        },
-        EventToken::Confirmation => {
-            "The user confirmed the thing".to_string()
-        },
-        _ => "the user did something else".to_string()
-    };
-
-    formatted_input + input.from.as_str() + input.to.as_str()
-}
-
-
-impl rocket::data::FromData for SimpleTwimlMessage {
-    type Error = String;
-
-    fn from_data(_: &Request, data: Data) -> data::Outcome<Self, Self::Error> {
-        // Read the data into a String.
-        let mut string = String::new();
-        if let Err(e) = data.open().read_to_string(&mut string) {
-            return Failure((Status::InternalServerError, format!("{:?}", e)));
-        }
-        print!("{}", string);
-
-        // grab the data from the request
-        let to_regex: Regex = Regex::new(r"&To=(.*)&ToZip=").unwrap();
-        let mut to = match to_regex.captures(string.as_str()) {
-            Some(matches) => matches.get(1).map_or("", |m| m.as_str()).to_string(),
-            None =>  "500 Internal error".to_string()
-        };
-
-        let from_regex: Regex = Regex::new(r"&From=(.*)&ApiVersion=").unwrap();
-        let mut from = match from_regex.captures(string.as_str()) {
-            Some(matches) => matches.get(1).map_or("", |m| m.as_str()).to_string(),
-            None =>  "500 Internal error".to_string()
-        };
-
-        let body_regex: Regex = Regex::new(r"&Body=(.*)&FromCountry=").unwrap();
-        let mut message = match body_regex.captures(string.as_str()) {
-            Some(matches) => matches.get(1).map_or("", |m| m.as_str()).to_string(),
-            None =>  "500 Internal error".to_string()
-        };
-
-
-        // convert to unicode
-        from = convert_twilio_gsm7_to_utf8(from);
-        to = convert_twilio_gsm7_to_utf8(to);
-        message = convert_twilio_gsm7_to_utf8(message);
-
-
-        Success(SimpleTwimlMessage {
-            from: from,
-            to: to,
-            message: message
-        })
-    }
-}
-
-fn convert_twilio_gsm7_to_utf8(input: String) -> String {
-    let mut input = input;
-    let plus_to_space_regex: Regex = Regex::new(r"\+").unwrap();
-    input = (*plus_to_space_regex.replace_all(input.as_str(), " ")).to_string();
-
-    return (*percent_encoding::percent_decode(input.as_str().as_bytes()).decode_utf8_lossy()).to_string();
+    state_machine::SmState::handle_input(input, &mut user_store.lock().unwrap())
 }
 
 
@@ -140,14 +56,14 @@ fn main() {
     {
         let mut new_henry_user = User::new("".to_string(), "".to_string(), "".to_string()); //Initialize to empty user.
         {
-            let mut henry_user = user_store.get_user_by_phone_number("+18472871920".to_string()).unwrap();
+            let mut henry_user = user_store.clone().get_user_by_phone_number("+18472871920").unwrap().clone(); // This is _really_ ugly (2 clones to avoid the borrow checker, one of which should be expensive)
 
             let (new_state, message) = user_store
-                .get_user_by_phone_number("+18472871920".to_string()).unwrap()
+                .get_user_by_phone_number("+18472871920").unwrap()
                 .state
-                .next(EventToken::BoatAttendanceInternalRequest { message: &"do you want to do event at time?".to_string() });
+                .next(EventToken::BoatAttendanceInternalRequest { message: &"do you want to do event at time?".to_string() }, &mut user_store);
 
-            send_message_to_user(&client, message.unwrap(), henry_user);
+            send_message_to_user(&client, message.unwrap(), &henry_user);
 
             new_henry_user = henry_user.clone();
             new_henry_user.set_state(new_state);
@@ -157,14 +73,19 @@ fn main() {
 
 
         //    //check what state it has
-        let mut user_henry = user_store.get_user_by_phone_number("+18472871920".to_string()).unwrap();
+        let mut user_henry = user_store.get_user_by_phone_number("+18472871920").unwrap();
         println!("{:?}", user_henry.state);
     }
 
 
+    // The user store must be mutexed in order for the handle_input fn to be able to use it mutably (in a multi-thread env, you probably don't want simultaneous access to this global state)
+    // Mitigate this restriction when using the DB, by getting a connection pool, so the pool members can each be borrowed mutably, while the container doesn't have to be (not even sure if the db connections will be mutable in the first place)
+    let mutexed_user_store: Mutex<MockUserStore> = Mutex::new(user_store);
+
+
     rocket::ignite()
         .manage(client)
-        .manage(user_store)
+        .manage(mutexed_user_store)
         .mount("/", routes![index, sms])
         .launch();
 }
