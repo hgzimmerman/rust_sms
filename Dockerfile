@@ -6,6 +6,7 @@ WORKDIR /app
 
 RUN source /root/.bashrc; source /root/.bash_profile
 RUN pacman -Syu --noconfirm
+RUN pacman -S base --noconfirm
 RUN pacman -S systemd --noconfirm
 RUN pacman -S vim --noconfirm
 RUN pacman -S make --noconfirm

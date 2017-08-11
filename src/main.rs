@@ -1,7 +1,10 @@
 #![feature(const_fn)]
-#![feature(drop_types_in_const)] //Needed to have a statically accessible db connection
+#![feature(drop_types_in_const)] //Needed to have a statically accessible db connection //lazy static
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
+
+#[macro_use] extern crate diesel;
+#[macro_use] extern crate diesel_codegen;
 
 extern crate rocket;
 extern crate twilio;
@@ -31,8 +34,16 @@ mod event;
 mod resource;
 mod db_handle;
 mod user_store;
-use db_handle::{DB_HANDLE, DbHandle};
 use user_store::MockUserStore;
+
+mod models;
+mod schema; // The schema will auto-codegen the path for each table. This will create the module path: schema::users... for the users table. `diesel migration run` must me ran for this to take effect
+
+use diesel::*;
+
+use models::users;
+
+use schema::users::dsl::*;
 
 
 #[get("/")]
@@ -77,6 +88,16 @@ fn main() {
         let mut user_henry = user_store.get_user_by_phone_number("+18472871920").unwrap();
         println!("{:?}", user_henry.state);
     }
+
+
+    db_handle::insert_user(users::NewUser {
+        first_name : "henry".to_string(),
+        last_name : "zimmerman".to_string(),
+        phone_number: "+18472871920".to_string()
+    });
+
+    db_handle::get_users();
+
 
 
     // The user store must be mutexed in order for the handle_input fn to be able to use it mutably (in a multi-thread env, you probably don't want simultaneous access to this global state)
