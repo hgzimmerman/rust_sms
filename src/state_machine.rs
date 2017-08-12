@@ -129,7 +129,7 @@ impl SmState {
 //            }
 //        };
 
-        let user: RealizedUser = match db::get_user_by_phone_number(twim.from) {
+        let user: RealizedUser = match RealizedUser::get_user_by_phone_number(twim.from, db_connection) {
             Some(u) => u,
             None => panic!("didn't find user, this should probably handle a create user state")
         };
@@ -139,7 +139,7 @@ impl SmState {
 
         let (new_state, message) = user.clone().state.next(token); // Consider moving this into a fn in User
         let mut user = user;
-        db::update_user_state(&user, new_state);
+        user.db_update_state(new_state, db_connection);
 //        user.set_state(new_state);
 //        user_store.update_user(&user);
 

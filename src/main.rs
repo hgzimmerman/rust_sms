@@ -70,11 +70,11 @@ fn sms(input: SimpleTwimlMessage, mut user_store: State<Mutex<MockUserStore>>, d
 
 fn main() {
 
+    //Set up Logging
     const LOGFILE_NAME: &'static str = "sms.log";
     CombinedLogger::init(
         vec!
         [
-
             TermLogger::new(LogLevelFilter::Info, Config::default()).unwrap(),
             TermLogger::new(LogLevelFilter::Warn, Config::default()).unwrap(),
             TermLogger::new(LogLevelFilter::Error, Config::default()).unwrap(),
@@ -92,20 +92,21 @@ fn main() {
     let db_connection: PgConnection = db::establish_connection();
 
     const HENRY_PHONE : &'static str = "+18472871920";
-    match db::get_user_by_phone_number(HENRY_PHONE.to_string()) {
+    match users::RealizedUser::get_user_by_phone_number(HENRY_PHONE.to_string(), &db_connection) {
         None => {
             let henry: users::NewUser = users::NewUser::new("Henry".to_string(), "Zimmerman".to_string(), HENRY_PHONE.to_string());
-            db::insert_user(henry);
+            henry.db_insert(&db_connection);
         }
-        Some(hen) => db::update_user_state(&hen, SmState::StartState)
+        Some(hen) => hen.db_update_state(SmState::StartState, &db_connection)
     }
 
 
-    let realized_henry: users::RealizedUser = db::get_user_by_phone_number(HENRY_PHONE.to_string()).unwrap();
+    let realized_henry: users::RealizedUser = users::RealizedUser::get_user_by_phone_number(HENRY_PHONE.to_string(), &db_connection).unwrap();
     let cloned_henry = realized_henry.clone();
 
     let (new_state, message) = realized_henry.state.next(EventToken::BoatAttendanceInternalRequest { message: &"do you want to do event at time?".to_string() });
-    db::update_user_state(&cloned_henry, new_state);
+    cloned_henry.db_update_state(new_state, &db_connection);
+
 
     send_message_to_user(&client, message.unwrap(), &cloned_henry);
 

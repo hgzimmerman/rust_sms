@@ -1,5 +1,8 @@
 use schema::users;
 use state_machine::SmState;
+use diesel::pg::PgConnection;
+use diesel;
+use diesel::prelude::*;
 
 /// Db interfaceable user
 #[derive(Queryable, Identifiable, Clone)]
@@ -34,7 +37,19 @@ impl NewUser {
             state: SmState::StartState.into(),
         }
     }
+
+    pub fn db_insert(&self, connection: &PgConnection) {
+        use schema::users;
+
+        diesel::insert(self)
+            .into(users::table)
+            .execute(connection)
+            .expect("Error saving user");
+    }
 }
+
+
+
 
 /// User
 #[derive(Clone)]
@@ -51,6 +66,34 @@ impl RealizedUser {
 //    pub fn get_state(&self) -> &SmState {
 //        &self.state
 //    }
+
+    pub fn db_update_state(&self, new_state: SmState, connection: &PgConnection) {
+        use schema::users::dsl::*;
+
+        let db_user: User = self.clone().into();
+        let state_representation: i32 = new_state.into();
+        diesel::update(&db_user)
+            .set(state.eq(state_representation))
+            .execute(connection);
+    }
+
+    /// Given a string representing a phone number, search the db for the corresponding user
+    ///
+    pub fn get_user_by_phone_number(searched_phone_number: String, connection: &PgConnection) -> Option<RealizedUser> {
+        use schema::users::dsl::*;
+
+        let results = users.filter(phone_number.eq(searched_phone_number))
+            .limit(1)
+            .load::<User>(connection)
+            .expect("ERR loading users");
+
+        // get the only element in the results
+        match results.iter().last() {
+            Some(user) => Some(RealizedUser::from(user.clone())),    // Clone the user to get ownership, the convert to the app based user
+            None => None
+        }
+    }
+
 
 }
 
