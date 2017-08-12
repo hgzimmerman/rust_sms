@@ -1,12 +1,14 @@
 use models::users::NewUser;
 use state_machine::SmState;
+use schema::new_user_builders;
 
-
+#[derive(Queryable, Identifiable, Clone)]
 pub struct NewUserBuilder {
     pub id: i32,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub phone_number: Option<String>
+    pub phone_number: Option<String>,
+    pub builder_state: i32
 }
 
 
@@ -25,3 +27,22 @@ impl NewUserBuilder {
         })
     }
 }
+
+
+
+
+
+
+
+enum BuilderState {
+    AwaitingFirstName, // start
+    AwaitingLastName,
+    Confirming,
+    Done
+}
+
+
+
+
+
+

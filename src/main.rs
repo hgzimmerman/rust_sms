@@ -62,7 +62,7 @@ fn index() -> &'static str {
 fn sms(input: SimpleTwimlMessage, mut user_store: State<Mutex<MockUserStore>>, db_connection: State<Mutex<PgConnection>>) -> String {
     print!("/sms");
 
-    //The locks here will prevent other posts to /sms from being processed until this action ends, dropping the lock. Consider adding pools if the underlying process begins to take too long.
+    //The locks here will prevent other posts to /sms from being processed until this scope ends, dropping the lock. Consider adding pools if the underlying process begins to take too long.
     state_machine::SmState::handle_input(input, &mut user_store.lock().unwrap(), &db_connection.lock().unwrap())
 }
 
