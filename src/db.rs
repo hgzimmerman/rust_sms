@@ -29,42 +29,6 @@ pub fn get_users() {
     }
 }
 
-//pub fn get_user_by_phone_number(searched_phone_number: String) -> Option<RealizedUser> {
-//    use schema::users::dsl::*;
-//
-//    let connection = establish_connection();
-//    let results = users.filter(phone_number.eq(searched_phone_number))
-//        .limit(1)
-//        .load::<User>(&connection)
-//        .expect("ERR loading users");
-//
-//    // get the only element in the results
-//    match results.iter().last() {
-//        Some(user) => Some(RealizedUser::from(user.clone())),    // Clone the user to get ownership, the convert to the app based user
-//        None => None
-//    }
-//}
-
-//pub fn insert_user(new_user: NewUser) -> User {
-//    use schema::users;
-//
-//    let connection = establish_connection();
-//
-//    diesel::insert(&new_user).into(users::table)
-//        .get_result(&connection)
-//        .expect("Error saving user")
-//}
-
-//pub fn update_user_state(user_to_alter: &RealizedUser, new_state: SmState) {
-//    use schema::users::dsl::*;
-//    let connection = establish_connection();
-//
-//    let db_user: User = user_to_alter.clone().into();
-//    let state_representation: i32 = new_state.into();
-//    diesel::update(&db_user)
-//        .set(state.eq(state_representation))
-//        .execute(&connection);
-//}
 
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();

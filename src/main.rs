@@ -48,6 +48,7 @@ mod schema; // The schema will auto-codegen the path for each table. This will c
 
 
 use models::users;
+use models::new_user_builders;
 
 use diesel::pg::PgConnection;
 
