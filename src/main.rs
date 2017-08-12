@@ -11,8 +11,6 @@ extern crate twilio;
 extern crate dotenv;
 extern crate regex;
 extern crate percent_encoding;
-#[macro_use]
-extern crate lazy_static;
 
 #[macro_use]
 extern crate log;

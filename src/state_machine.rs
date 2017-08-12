@@ -1,9 +1,7 @@
 extern crate twilio;
 
 use user_store::MockUserStore;
-//use user::{User, UserBuilder};
 use twilio_client_wrapper::SimpleTwimlMessage;
-use db;
 use diesel::pg::PgConnection;
 use models::users::RealizedUser;
 
@@ -179,7 +177,7 @@ impl From<i32> for SmState {
             4 => AwaitingLastNameState,
             5 => ConfirmingNameState,
 //            6 => NewUserState{}
-            _ => panic!()
+            _ => panic!("Tried to convert number {} to state", number)
         }
     }
 }
