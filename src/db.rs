@@ -12,6 +12,8 @@ use dotenv::dotenv;
 use std::env;
 use models::users::*;
 
+use state_machine::SmState;
+
 pub fn get_users() {
 
     use schema::users::dsl::*;
@@ -20,8 +22,10 @@ pub fn get_users() {
     let results = users.load::<User>(&connection).expect("ERR loading users");
 
     for user in results {
+        println!("{}", user.id);
         println!("{} {}", user.first_name, user.last_name);
-        println!("{}\n", user.phone_number);
+        println!("{}", user.phone_number);
+        println!("stateNum: {}", user.state);
         println!("----------\n");
     }
 }
@@ -50,6 +54,17 @@ pub fn insert_user(new_user: NewUser) -> User {
     diesel::insert(&new_user).into(users::table)
         .get_result(&connection)
         .expect("Error saving user")
+}
+
+pub fn update_user_state(user_to_alter: &RealizedUser, new_state: SmState) {
+    use schema::users::dsl::*;
+    let connection = establish_connection();
+
+    let db_user: User = user_to_alter.clone().into();
+    let state_representation: i32 = new_state.into();
+    diesel::update(&db_user)
+        .set(state.eq(state_representation))
+        .execute(&connection);
 }
 
 pub fn establish_connection() -> PgConnection {

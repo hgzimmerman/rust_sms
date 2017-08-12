@@ -2,7 +2,7 @@ use schema::users;
 use state_machine::SmState;
 
 /// Db interfaceable user
-#[derive(Queryable, Clone)]
+#[derive(Queryable, Identifiable, Clone)]
 pub struct User {
     pub id: i32,
     pub first_name: String,
@@ -21,7 +21,6 @@ pub struct NewUser {
     pub phone_number: String,
     pub state: i32
 }
-
 
 
 
@@ -48,6 +47,13 @@ pub struct RealizedUser {
     pub state: SmState
 }
 
+impl RealizedUser {
+//    pub fn get_state(&self) -> &SmState {
+//        &self.state
+//    }
+
+}
+
 impl From<User> for RealizedUser {
     fn from(user: User) -> Self {
         RealizedUser {
@@ -56,6 +62,18 @@ impl From<User> for RealizedUser {
             last_name : user.last_name.clone(),
             phone_number : user.phone_number.clone(),
             state : user.state.into()
+        }
+    }
+}
+
+impl Into<User> for RealizedUser {
+    fn into(self) -> User {
+        User {
+            id: self.id,
+            first_name: self.first_name.clone(),
+            last_name: self.last_name.clone(),
+            phone_number: self.phone_number.clone(),
+            state : self.state.into()
         }
     }
 }

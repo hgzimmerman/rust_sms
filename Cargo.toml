@@ -9,6 +9,8 @@ rocket_codegen = "0.3.0"
 twilio = "*"
 dotenv = "0.10.1"
 regex = "0.2.2"
+log = "0.3.8"
+simplelog = "^0.4.2"
 percent-encoding = "1.0.0"
 lazy_static = "0.2.8"
 diesel = { version = "0.15.0", features = ["postgres"] }

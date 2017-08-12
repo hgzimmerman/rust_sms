@@ -1,10 +1,13 @@
 extern crate twilio;
 
 use user_store::MockUserStore;
-use user::{User, UserBuilder};
+//use user::{User, UserBuilder};
 use twilio_client_wrapper::SimpleTwimlMessage;
+use db;
+use diesel::pg::PgConnection;
+use models::users::RealizedUser;
 
-#[derive( Clone)]
+#[derive(Debug, Clone)]
 pub enum EventToken<'a> {
     RawInput { raw_input: String },
     Confirmation,
@@ -66,6 +69,9 @@ impl SmState {
     pub fn next(self, event: EventToken) -> (SmState, Option<String>) {
         use EventToken::*;
         use SmState::*;
+
+        info!("Transitioning to new state with current state: {:?}, and Token: {:?}", self, event);
+
         match (self.clone(), event) {
             (StartState, BoatAttendanceInternalRequest {message: m}) => {
                 (AwaitingEventConfirmationState, Some(m.clone()))
@@ -112,15 +118,20 @@ impl SmState {
     }
 
 
-    pub fn handle_input(twim: SimpleTwimlMessage, mut user_store: &mut MockUserStore) -> String {
-        let empty_user = User::empty();
-        // bad because this clones the store, and then the found user :/
-        let user: User = match user_store.clone().get_user_by_phone_number( &twim.from ) {
-            Some(found_user) => found_user.clone(),
-            None => {
-                println!("Didn't find user for phone number: {}", twim.from);
-                empty_user
-            }
+    pub fn handle_input(twim: SimpleTwimlMessage, mut user_store: &mut MockUserStore, db_connection: &PgConnection) -> String {
+//        let empty_user = User::empty();
+//        // bad because this clones the store, and then clones the found user :/
+//        let user: User = match user_store.clone().get_user_by_phone_number( &twim.from ) {
+//            Some(found_user) => found_user.clone(),
+//            None => {
+//                println!("Didn't find user for phone number: {}", twim.from);
+//                empty_user
+//            }
+//        };
+
+        let user: RealizedUser = match db::get_user_by_phone_number(twim.from) {
+            Some(u) => u,
+            None => panic!("didn't find user, this should probably handle a create user state")
         };
 
 
@@ -128,8 +139,9 @@ impl SmState {
 
         let (new_state, message) = user.clone().state.next(token); // Consider moving this into a fn in User
         let mut user = user;
-        user.set_state(new_state);
-        user_store.update_user(&user);
+        db::update_user_state(&user, new_state);
+//        user.set_state(new_state);
+//        user_store.update_user(&user);
 
         message.unwrap()
     }
