@@ -10,8 +10,8 @@ use rocket::{Request, Data, State };
 use rocket::data::{self};
 use std::io::Read;
 
-use user::User;
-
+//use user::User;
+use users::RealizedUser;
 
 pub fn create_client() -> twilio::Client {
     // Get the account ID
@@ -44,7 +44,7 @@ fn send_message(client: &twilio::Client, message: String, recepient: &str) {
     let _ = client.send_message(outbound_message);
 }
 
-pub fn send_message_to_user(client: &twilio::Client, message: String, user: &User) {
+pub fn send_message_to_user(client: &twilio::Client, message: String, user: &RealizedUser) {
     send_message(client, message, user.phone_number.as_str());
     println!("sent message");
 }

@@ -21,8 +21,24 @@ pub fn get_users() {
 
     for user in results {
         println!("{} {}", user.first_name, user.last_name);
-        println!("----------\n");
         println!("{}\n", user.phone_number);
+        println!("----------\n");
+    }
+}
+
+pub fn get_user_by_phone_number(searched_phone_number: String) -> Option<RealizedUser> {
+    use schema::users::dsl::*;
+
+    let connection = establish_connection();
+    let results = users.filter(phone_number.eq(searched_phone_number))
+        .limit(1)
+        .load::<User>(&connection)
+        .expect("ERR loading users");
+
+    // get the only element in the results
+    match results.iter().last() {
+        Some(user) => Some(RealizedUser::from(user.clone())),    // Clone the user to get ownership, the convert to the app based user
+        None => None
     }
 }
 

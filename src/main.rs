@@ -32,7 +32,7 @@ use user::User;
 
 mod event;
 mod resource;
-mod db_handle;
+mod db;
 mod user_store;
 use user_store::MockUserStore;
 
@@ -43,6 +43,7 @@ use diesel::*;
 
 use models::users;
 
+use diesel::pg::PgConnection;
 use schema::users::dsl::*;
 
 
@@ -64,18 +65,32 @@ fn sms(input: SimpleTwimlMessage, mut user_store: State<Mutex<MockUserStore>>) -
 
 fn main() {
     let client = create_client();
+
     let mut user_store = MockUserStore::init();
+
+    const HENRY_PHONE : &'static str = "+18472871920";
+
+    let db_connection: PgConnection = db::establish_connection();
+    let henry: users::NewUser = users::NewUser::new("Henry".to_string(), "Zimmerman".to_string(), "+18472871920".to_string());
+    let db_henry: users::User = db::insert_user(henry);
+    let realized_henry: users::RealizedUser = db::get_user_by_phone_number(HENRY_PHONE.to_string()).unwrap();
+    let mut mutable_realized_henry = realized_henry.clone();
+
+    let (new_state, message) = realized_henry.state.next(EventToken::BoatAttendanceInternalRequest { message: &"do you want to do event at time?".to_string() });
+
+    send_message_to_user(&client, message.unwrap(), &mutable_realized_henry);
+
     {
         let mut new_henry_user = User::new("".to_string(), "".to_string(), "".to_string()); //Initialize to empty user.
         {
             let mut henry_user = user_store.clone().get_user_by_phone_number("+18472871920").unwrap().clone(); // This is _really_ ugly (2 clones to avoid the borrow checker, one of which should be expensive)
 
-            let (new_state, message) = user_store
-                .get_user_by_phone_number("+18472871920").unwrap().clone()
-                .state
-                .next(EventToken::BoatAttendanceInternalRequest { message: &"do you want to do event at time?".to_string() }, &mut user_store);
+//            let (new_state, message) = user_store
+//                .get_user_by_phone_number("+18472871920").unwrap().clone()
+//                .state
+//                .next(EventToken::BoatAttendanceInternalRequest { message: &"do you want to do event at time?".to_string() }, &mut user_store);
 
-            send_message_to_user(&client, message.unwrap(), &henry_user);
+//            send_message_to_user(&client, message.unwrap(), &henry_user);
 
             new_henry_user = henry_user.clone();
             new_henry_user.set_state(new_state);
@@ -90,13 +105,13 @@ fn main() {
     }
 
 
-    db_handle::insert_user(users::NewUser {
-        first_name : "henry".to_string(),
-        last_name : "zimmerman".to_string(),
-        phone_number: "+18472871920".to_string()
-    });
+//    db::insert_user(users::NewUser {
+//        first_name : "henry".to_string(),
+//        last_name : "zimmerman".to_string(),
+//        phone_number: "+18472871920".to_string()
+//    });
 
-    db_handle::get_users();
+    db::get_users();
 
 
 

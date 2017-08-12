@@ -58,12 +58,12 @@ pub enum SmState {
     AwaitingFirstNameState,
     AwaitingLastNameState,
     ConfirmingNameState,
-    NewUserState {provisional_user: UserBuilder}
+//    NewUserState {provisional_user: UserBuilder}
 }
 
 impl SmState {
     //Consider making this take the SimpleTwimlMessage, and extracting the token from that
-    pub fn next(self, event: EventToken, user_store: &mut MockUserStore) -> (SmState, Option<String>) {
+    pub fn next(self, event: EventToken) -> (SmState, Option<String>) {
         use EventToken::*;
         use SmState::*;
         match (self.clone(), event) {
@@ -126,7 +126,7 @@ impl SmState {
 
         let token: EventToken = tokenize_input(twim.message);
 
-        let (new_state, message) = user.clone().state.next(token, &mut user_store); // Consider moving this into a fn in User
+        let (new_state, message) = user.clone().state.next(token); // Consider moving this into a fn in User
         let mut user = user;
         user.set_state(new_state);
         user_store.update_user(&user);
@@ -137,5 +137,37 @@ impl SmState {
     pub fn alt_next(mut self, event: EventToken) -> Option<String> {
         self = SmState::AwaitingEventConfirmationState;
         Some("You have confirmed".to_string())
+    }
+}
+
+
+impl Into<i32> for SmState {
+    fn into(self) -> i32{
+        use SmState::*;
+        match self {
+            StartState => 0,
+            AwaitingEventConfirmationState => 1,
+            ConfirmingCancellationState => 2,
+            AwaitingFirstNameState => 3,
+            AwaitingLastNameState => 4,
+            ConfirmingNameState => 5,
+//            NewUserState => 6
+        }
+    }
+}
+
+impl From<i32> for SmState {
+    fn from(number: i32) -> SmState {
+        use SmState::*;
+        match number {
+            0 => StartState,
+            1 => AwaitingEventConfirmationState,
+            2 => ConfirmingCancellationState,
+            3 => AwaitingFirstNameState,
+            4 => AwaitingLastNameState,
+            5 => ConfirmingNameState,
+//            6 => NewUserState{}
+            _ => panic!()
+        }
     }
 }
