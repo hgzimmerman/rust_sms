@@ -57,10 +57,6 @@ pub enum SmState {
     StartState,
     AwaitingEventConfirmationState,
     ConfirmingCancellationState,
-    AwaitingFirstNameState,
-    AwaitingLastNameState,
-    ConfirmingNameState,
-//    NewUserState {provisional_user: UserBuilder}
 }
 
 impl SmState {
@@ -160,9 +156,6 @@ impl Into<i32> for SmState {
             StartState => 0,
             AwaitingEventConfirmationState => 1,
             ConfirmingCancellationState => 2,
-            AwaitingFirstNameState => 3,
-            AwaitingLastNameState => 4,
-            ConfirmingNameState => 5,
 //            NewUserState => 6
         }
     }
@@ -175,9 +168,7 @@ impl From<i32> for SmState {
             0 => StartState,
             1 => AwaitingEventConfirmationState,
             2 => ConfirmingCancellationState,
-            3 => AwaitingFirstNameState,
-            4 => AwaitingLastNameState,
-            5 => ConfirmingNameState,
+
 //            6 => NewUserState{}
             _ => panic!("Tried to convert number {} to state", number)
         }

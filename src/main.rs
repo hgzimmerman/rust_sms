@@ -58,7 +58,7 @@ fn index() -> &'static str {
 
 #[post("/sms", data = "<input>" )]
 fn sms(input: SimpleTwimlMessage, db_connection: State<Mutex<PgConnection>>) -> String {
-    info!("Message: \"{}\", from {}.", input.message, input.from);
+    info!("Received message: \"{}\", from {}.", input.message, input.from);
     //The locks here will prevent other posts to /sms from being processed until this scope ends, dropping the lock. Consider adding pools if the underlying process begins to take too long.
     state_machine::SmState::handle_input(input, &db_connection.lock().unwrap())
 }
