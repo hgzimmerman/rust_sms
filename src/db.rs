@@ -1,16 +1,10 @@
-use std::sync::Mutex;
 
-use models::*;
 use diesel::prelude::*;
-use diesel;
-
-
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
 use std::env;
 use models::users::*;
 
-use state_machine::SmState;
 
 pub fn get_users() {
 

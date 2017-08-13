@@ -1,5 +1,7 @@
+mod user_state;
+pub use self::user_state::UserState;
+
 use schema::users;
-use state_machine::SmState;
 use diesel::pg::PgConnection;
 use diesel;
 use diesel::prelude::*;
@@ -34,7 +36,7 @@ impl NewUser {
             last_name: last_name,
             phone_number: phone_number,
             //groups: Vec::new(),
-            state: SmState::StartState.into(),
+            state: UserState::StartState.into(),
         }
     }
 
@@ -59,13 +61,13 @@ pub struct RealizedUser {
     pub last_name: String,
     pub phone_number: String, // TODO create a phone number type?
     //    pub groups: Vec<Group>,
-    pub state: SmState
+    pub state: UserState
 }
 
 impl RealizedUser {
 
 
-    pub fn db_update_state(&self, new_state: SmState, connection: &PgConnection) {
+    pub fn db_update_state(&self, new_state: UserState, connection: &PgConnection) {
         use schema::users::dsl::*;
 
         let db_user: User = self.clone().into();

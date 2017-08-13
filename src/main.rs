@@ -23,7 +23,6 @@ use std::fs::File;
 use rocket::{Request, Data, State };
 use rocket::data::{self};
 use rocket::http::{Status};
-use std::io::Read;
 use std::sync::Mutex;
 
 mod state_machine;
@@ -57,7 +56,7 @@ fn index() -> &'static str {
 fn sms(input: SimpleTwimlMessage, db_connection: State<Mutex<PgConnection>>) -> String {
     info!("Received message: \"{}\", from {}.", input.message, input.from);
     //The locks here will prevent other posts to /sms from being processed until this scope ends, dropping the lock. Consider adding pools if the underlying process begins to take too long.
-    let message: String = state_machine::SmState::handle_input(input, &db_connection.lock().unwrap());
+    let message: String = state_machine::handle_input(input, &db_connection.lock().unwrap());
     info!("Sending response: {}", message);
     message
 }

@@ -6,7 +6,7 @@ use percent_encoding;
 use rocket::Outcome::*;
 use regex::Regex;
 use rocket::http::{Status};
-use rocket::{Request, Data, State };
+use rocket::{Request, Data};
 use rocket::data::{self};
 use std::io::Read;
 

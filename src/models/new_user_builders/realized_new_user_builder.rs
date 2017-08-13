@@ -3,8 +3,7 @@ use super::NewUserBuilder;
 use diesel;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
-use models::users::NewUser;
-use state_machine::SmState;
+use models::users::{NewUser, UserState};
 
 use super::user_builder_state::UserBuilderState;
 
@@ -54,7 +53,7 @@ impl RealizedNewUserBuilder {
             first_name: first_name,
             last_name: last_name,
             phone_number: self.phone_number,
-            state: SmState::StartState.into()
+            state: UserState::StartState.into()
         })
     }
 
@@ -85,7 +84,6 @@ impl RealizedNewUserBuilder {
             .into(new_user_builders::table)
             .execute(connection)
             .expect("Error saving provisional user");
-
     }
 
     pub fn db_update(&self, connection:&PgConnection) {
