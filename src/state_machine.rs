@@ -62,7 +62,6 @@ pub fn handle_input(twim: SimpleTwimlMessage, db_connection: &PgConnection) -> S
     match RealizedUser::get_user_by_phone_number(&twim.from, db_connection) {
         Some(user) => {
             let (new_state, message) = user.clone().state.next(token); // Consider moving this into a fn in User
-            let mut user = user;
             user.db_update_state(new_state, db_connection);
             message.unwrap()
         },

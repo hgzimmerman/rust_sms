@@ -42,7 +42,7 @@ impl UserBuilderState {
         use self::UserBuilderState::*;
         info!("Transitioning to a new user builder state with current builder state: {:?}, and Token: {:?}", self, event);
 
-        match (self.clone(), event) {
+        match (self, event) {
             (AwaitingFirstName, RawInput{raw_input: message}) => {
                 let mut mutable_builder: RealizedNewUserBuilder = builder.clone();
                 mutable_builder.add_first_name(message);

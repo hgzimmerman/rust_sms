@@ -1,7 +1,6 @@
 use state_machine::EventToken;
 
-/// SmState is shorthand for State-Machine State, distinguishing it from Rocket's 'State'
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum UserState {
     StartState,
     AwaitingEventConfirmationState,
@@ -16,7 +15,7 @@ impl UserState {
 
         info!("Transitioning to a new user state with current state: {:?}, and Token: {:?}", self, event);
 
-        match (self.clone(), event) {
+        match (self, event) {
             (StartState, BoatAttendanceInternalRequest { message: m }) => {
                 (AwaitingEventConfirmationState, Some(m.clone()))
             },

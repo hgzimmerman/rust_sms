@@ -105,5 +105,5 @@ fn convert_twilio_gsm7_to_utf8(input: String) -> String {
     let plus_to_space_regex: Regex = Regex::new(r"\+").unwrap();
     input = (*plus_to_space_regex.replace_all(input.as_str(), " ")).to_string();
 
-    return (*percent_encoding::percent_decode(input.as_str().as_bytes()).decode_utf8_lossy()).to_string();
+    (*percent_encoding::percent_decode(input.as_str().as_bytes()).decode_utf8_lossy()).to_string()
 }
