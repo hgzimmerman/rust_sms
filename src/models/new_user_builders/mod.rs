@@ -10,7 +10,7 @@ use std::borrow::ToOwned;
 
 ///This uses the phone number as the primary key, I'm not sure how I feel about that...
 /// The code is responsible for ensuring that this "key" isn't in the system
-#[derive(Queryable, Identifiable, Clone, Insertable )]
+#[derive(Queryable, Identifiable, Clone, Insertable, AsChangeset )]
 #[primary_key(phone_number)]
 #[table_name="new_user_builders"]
 pub struct NewUserBuilder {

@@ -60,7 +60,9 @@ fn index() -> &'static str {
 fn sms(input: SimpleTwimlMessage, db_connection: State<Mutex<PgConnection>>) -> String {
     info!("Received message: \"{}\", from {}.", input.message, input.from);
     //The locks here will prevent other posts to /sms from being processed until this scope ends, dropping the lock. Consider adding pools if the underlying process begins to take too long.
-    state_machine::SmState::handle_input(input, &db_connection.lock().unwrap())
+    let message: String = state_machine::SmState::handle_input(input, &db_connection.lock().unwrap());
+    info!("Sending response: {}", message);
+    message
 }
 
 
@@ -101,7 +103,7 @@ fn main() {
     let realized_henry: users::RealizedUser = users::RealizedUser::get_user_by_phone_number(&HENRY_PHONE.to_string(), &db_connection).unwrap();
     let cloned_henry = realized_henry.clone();
 
-    let (new_state, message) = realized_henry.state.next(EventToken::BoatAttendanceInternalRequest { message: &"do you want to do event at time?".to_string() });
+    let (new_state, message) = realized_henry.state.next(EventToken::BoatAttendanceInternalRequest { message: &"Do you want to do event at time?".to_string() });
     cloned_henry.db_update_state(new_state, &db_connection);
 
 

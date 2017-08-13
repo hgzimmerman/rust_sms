@@ -12,8 +12,8 @@ use super::user_builder_state::UserBuilderState;
 #[derive(Clone, Debug)]
 pub struct RealizedNewUserBuilder {
     pub phone_number: String,
-    pub first_name: Option<String>,
-    pub last_name: Option<String>,
+    first_name: Option<String>,
+    last_name: Option<String>,
     pub builder_state: UserBuilderState
 }
 
@@ -45,16 +45,22 @@ impl RealizedNewUserBuilder {
         })
     }
 
-    fn add_first_name(&mut self, first_name: String) {
+    pub fn add_first_name(&mut self, first_name: String) {
         self.first_name = Some(first_name);
     }
-    fn add_last_name(&mut self, last_name: String) {
+    pub fn add_last_name(&mut self, last_name: String) {
         self.last_name = Some(last_name);
     }
-    fn add_phone_number(&mut self, phone_number: String) {
+    pub fn add_phone_number(&mut self, phone_number: String) {
         self.phone_number = phone_number;
     }
 
+    pub fn get_printable_name(&self) -> String {
+        let self_clone: RealizedNewUserBuilder = self.clone();
+        let first = self_clone.first_name.clone().unwrap();
+        let last = self_clone.last_name.clone().unwrap();
+        format!("{} {}", first, last)
+    }
 
 
     pub fn db_insert(&self, connection: &PgConnection) {
@@ -70,11 +76,29 @@ impl RealizedNewUserBuilder {
     }
 
     pub fn db_update(&self, connection:&PgConnection) {
-        unimplemented!()
+        use schema::new_user_builders;
+
+        let u: NewUserBuilder = self.clone().into();
+        diesel::update(new_user_builders::table)
+           .set(&u)
+           .execute(connection)
+           .expect("Error updating");
     }
 
     pub fn get_by_phone_number(searched_phone_number: &String, connection: &PgConnection) -> Option<RealizedNewUserBuilder> {
-        unimplemented!()
+        use schema::new_user_builders::dsl::*;
+
+        let phone_num: String = searched_phone_number.clone();
+        let results = new_user_builders.filter(phone_number.eq(phone_num))
+            .limit(1)
+            .load::<NewUserBuilder>(connection)
+            .expect("ERR loading users");
+
+        // get the only element in the results
+        match results.iter().last() {
+            Some(user_builder) => Some(RealizedNewUserBuilder::from(user_builder.clone())),    // Clone to get ownership, then convert.
+            None => None
+        }
     }
 
 

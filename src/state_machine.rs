@@ -11,6 +11,7 @@ pub enum EventToken<'a> {
     RawInput { raw_input: String },
     Confirmation,
     Declination,
+    Restart,
     HelpRequest,
     CancellationRequestInitiation,
     ChangeGroupsRequest,
@@ -36,6 +37,7 @@ pub fn tokenize_input<'a>(input: String) -> EventToken<'a> {
         "no thanks"|
         "no thankyou" |
         "decline"=> Declination,
+        "!restart" => Restart,
         "h" |
         "commands" |
         "options" => HelpRequest,
@@ -65,7 +67,7 @@ impl SmState {
         use EventToken::*;
         use SmState::*;
 
-        info!("Transitioning to new state with current state: {:?}, and Token: {:?}", self, event);
+        info!("Transitioning to a new user state with current state: {:?}, and Token: {:?}", self, event);
 
         match (self.clone(), event) {
             (StartState, BoatAttendanceInternalRequest {message: m}) => {
@@ -129,14 +131,16 @@ impl SmState {
                 // current user doesn't exist in a fully realized state
                 match RealizedNewUserBuilder::get_by_phone_number(&twim.from, db_connection) {
                     Some(provisional_user) => {
-                        let (new_state, message) = provisional_user.clone().builder_state.next(token);
+                        info!("Found an existing user builder: {:?}", provisional_user);
+                        let (new_state, message) = provisional_user.clone().builder_state.next(token, &provisional_user, db_connection);
                         provisional_user.db_update(db_connection);
                         message.unwrap()
                     },
                     None => {
+                        info!("Didn't find user, creating a user builder");
                         let new_user = RealizedNewUserBuilder::new(twim.from);
                         new_user.db_insert(&db_connection);
-                        "You don't have an account yet, you can start by entering your first name".to_string()
+                        "You don't have an account yet, you can start by entering your first name.".to_string()
                     }
                 }
 
@@ -158,7 +162,6 @@ impl Into<i32> for SmState {
             StartState => 0,
             AwaitingEventConfirmationState => 1,
             ConfirmingCancellationState => 2,
-//            NewUserState => 6
         }
     }
 }
@@ -171,7 +174,6 @@ impl From<i32> for SmState {
             1 => AwaitingEventConfirmationState,
             2 => ConfirmingCancellationState,
 
-//            6 => NewUserState{}
             _ => panic!("Tried to convert number {} to state", number)
         }
     }
