@@ -1,6 +1,5 @@
 extern crate twilio;
 
-use user_store::MockUserStore;
 use twilio_client_wrapper::SimpleTwimlMessage;
 use diesel::pg::PgConnection;
 use models::users::RealizedUser;

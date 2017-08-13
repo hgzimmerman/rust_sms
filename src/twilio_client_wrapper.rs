@@ -64,7 +64,7 @@ impl rocket::data::FromData for SimpleTwimlMessage {
         if let Err(e) = data.open().read_to_string(&mut string) {
             return Failure((Status::InternalServerError, format!("{:?}", e)));
         }
-        print!("{}", string);
+        info!("{}", string);
 
         // grab the data from the request
         let to_regex: Regex = Regex::new(r"&To=(.*)&ToZip=").unwrap();

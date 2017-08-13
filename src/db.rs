@@ -1,4 +1,3 @@
-use user_store::MockUserStore;
 use std::sync::Mutex;
 
 use models::*;

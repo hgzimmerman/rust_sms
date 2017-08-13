@@ -32,14 +32,11 @@ use state_machine::*;
 mod twilio_client_wrapper;
 use twilio_client_wrapper::*;
 
-mod user;
-use user::User;
+
 
 mod event;
 mod resource;
 mod db;
-mod user_store;
-use user_store::MockUserStore;
 
 mod models;
 mod schema; // The schema will auto-codegen the path for each table. This will create the module path: schema::users... for the users table. `diesel migration run` must me ran for this to take effect
