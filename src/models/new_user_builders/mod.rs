@@ -1,4 +1,5 @@
 pub mod realized_new_user_builder;
+pub mod user_builder_state;
 use self::realized_new_user_builder::RealizedNewUserBuilder;
 
 use models::users::NewUser;

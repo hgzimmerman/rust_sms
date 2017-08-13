@@ -129,7 +129,9 @@ impl SmState {
                 // current user doesn't exist in a fully realized state
                 match RealizedNewUserBuilder::get_by_phone_number(&twim.from, db_connection) {
                     Some(provisional_user) => {
-                        format!("Found an existing provisional user: {:?}, but didn't do anything with them", provisional_user)
+                        let (new_state, message) = provisional_user.clone().builder_state.next(token);
+                        provisional_user.db_update(db_connection);
+                        message.unwrap()
                     },
                     None => {
                         let new_user = RealizedNewUserBuilder::new(twim.from);

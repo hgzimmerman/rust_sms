@@ -6,12 +6,15 @@ use diesel::prelude::*;
 use models::users::NewUser;
 use state_machine::SmState;
 
+use super::user_builder_state::UserBuilderState;
+
+
 #[derive(Clone, Debug)]
 pub struct RealizedNewUserBuilder {
     pub phone_number: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub builder_state: BuilderState
+    pub builder_state: UserBuilderState
 }
 
 
@@ -24,7 +27,7 @@ impl RealizedNewUserBuilder {
             first_name: None,
             last_name: None,
             phone_number: phone_number,
-            builder_state: BuilderState::AwaitingFirstName
+            builder_state: UserBuilderState::AwaitingFirstName
         }
     }
 
@@ -97,42 +100,6 @@ impl From<NewUserBuilder> for RealizedNewUserBuilder {
             first_name: new_user_builder.first_name,
             last_name: new_user_builder.last_name,
             builder_state: new_user_builder.builder_state.into(),
-        }
-    }
-}
-
-
-
-
-
-#[derive(Clone, Debug)]
-pub enum BuilderState {
-    AwaitingFirstName, // start state
-    AwaitingLastName,
-    Confirming,
-    Done
-}
-
-
-impl From<i32> for BuilderState {
-    fn from(number: i32) -> Self {
-        match number {
-            1 => BuilderState::AwaitingFirstName,
-            2 => BuilderState::AwaitingLastName,
-            3 => BuilderState::Confirming,
-            4 => BuilderState::Done,
-            _ => panic!("Tried to convert number: {}", number)
-        }
-    }
-}
-
-impl Into<i32> for BuilderState {
-    fn into(self) -> i32 {
-        match self {
-            BuilderState::AwaitingFirstName => 1,
-            BuilderState::AwaitingLastName => 2,
-            BuilderState::Confirming => 3,
-            BuilderState::Done => 4
         }
     }
 }
