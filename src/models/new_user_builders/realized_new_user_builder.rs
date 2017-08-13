@@ -34,10 +34,23 @@ impl RealizedNewUserBuilder {
 
     pub fn build(self) -> Option<NewUser> {
 
-        let first_name = self.first_name.unwrap_or(return None);
-        let last_name = self.last_name.unwrap_or(return None);
+        let first_name = match self.first_name {
+            Some(first_name) => first_name,
+            None => {
+                error!("Tried to call build without setting the first name.");
+                return None
+            }
+        };
+        let last_name = match self.last_name {
+            Some(last_name) => last_name,
+            None => {
+                error!("Tried to call build without setting the last name.");
+                return None
+            }
+        };
 
-        Some(NewUser {
+        // Actually build the new user
+        Some( NewUser {
             first_name: first_name,
             last_name: last_name,
             phone_number: self.phone_number,

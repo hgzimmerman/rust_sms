@@ -132,7 +132,10 @@ impl SmState {
                     Some(provisional_user) => {
                         info!("Found an existing user builder: {:?}", provisional_user);
                         let (new_state, message) = provisional_user.clone().builder_state.next(token, &provisional_user, db_connection);
-                        provisional_user.db_update(db_connection);
+                        info!("New state: {:?}", new_state);
+                        let mut mutable_provisional_user = provisional_user;
+                        mutable_provisional_user.builder_state = new_state;
+                        mutable_provisional_user.db_update(db_connection);
                         message.unwrap()
                     },
                     None => {
