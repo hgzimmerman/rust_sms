@@ -45,8 +45,8 @@ fn send_message(client: &twilio::Client, message: String, recepient: &str) {
 }
 
 pub fn send_message_to_user(client: &twilio::Client, message: String, user: &RealizedUser) {
+    info!("Sending message: \"{}\" to user {} {}", message, user.first_name, user.last_name);
     send_message(client, message, user.phone_number.as_str());
-    println!("sent message");
 }
 
 pub struct SimpleTwimlMessage {

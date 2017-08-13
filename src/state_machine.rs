@@ -4,6 +4,7 @@ use user_store::MockUserStore;
 use twilio_client_wrapper::SimpleTwimlMessage;
 use diesel::pg::PgConnection;
 use models::users::RealizedUser;
+use models::new_user_builders::realized_new_user_builder::RealizedNewUserBuilder;
 
 #[derive(Debug, Clone)]
 pub enum EventToken<'a> {
@@ -116,32 +117,33 @@ impl SmState {
     }
 
 
-    pub fn handle_input(twim: SimpleTwimlMessage, mut user_store: &mut MockUserStore, db_connection: &PgConnection) -> String {
-//        let empty_user = User::empty();
-//        // bad because this clones the store, and then clones the found user :/
-//        let user: User = match user_store.clone().get_user_by_phone_number( &twim.from ) {
-//            Some(found_user) => found_user.clone(),
-//            None => {
-//                println!("Didn't find user for phone number: {}", twim.from);
-//                empty_user
-//            }
-//        };
-
-        let user: RealizedUser = match RealizedUser::get_user_by_phone_number(twim.from, db_connection) {
-            Some(u) => u,
-            None => panic!("didn't find user, this should probably handle a create user state")
-        };
+    pub fn handle_input(twim: SimpleTwimlMessage, db_connection: &PgConnection) -> String {
 
 
         let token: EventToken = tokenize_input(twim.message);
 
-        let (new_state, message) = user.clone().state.next(token); // Consider moving this into a fn in User
-        let mut user = user;
-        user.db_update_state(new_state, db_connection);
-//        user.set_state(new_state);
-//        user_store.update_user(&user);
+        match RealizedUser::get_user_by_phone_number(&twim.from, db_connection) {
+            Some(user) => {
+                let (new_state, message) = user.clone().state.next(token); // Consider moving this into a fn in User
+                let mut user = user;
+                user.db_update_state(new_state, db_connection);
+                message.unwrap()
+            }
+            None => {
+                // current user doesn't exist in a fully realized state
+                match RealizedNewUserBuilder::get_by_phone_number(&twim.from, db_connection) {
+                    Some(provisional_user) => {
+                        format!("Found an existing provisional user: {:?}, but didn't do anything with them", provisional_user)
+                    },
+                    None => {
+                        let new_user = RealizedNewUserBuilder::new(twim.from);
+                        new_user.db_insert(&db_connection);
+                        "You don't have an account yet, you can start by entering your first name".to_string()
+                    }
+                }
 
-        message.unwrap()
+            }
+        }
     }
 
     pub fn alt_next(mut self, event: EventToken) -> Option<String> {

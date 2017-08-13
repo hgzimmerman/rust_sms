@@ -63,9 +63,7 @@ pub struct RealizedUser {
 }
 
 impl RealizedUser {
-//    pub fn get_state(&self) -> &SmState {
-//        &self.state
-//    }
+
 
     pub fn db_update_state(&self, new_state: SmState, connection: &PgConnection) {
         use schema::users::dsl::*;
@@ -79,10 +77,11 @@ impl RealizedUser {
 
     /// Given a string representing a phone number, search the db for the corresponding user
     ///
-    pub fn get_user_by_phone_number(searched_phone_number: String, connection: &PgConnection) -> Option<RealizedUser> {
+    pub fn get_user_by_phone_number(searched_phone_number: &String, connection: &PgConnection) -> Option<RealizedUser> {
         use schema::users::dsl::*;
 
-        let results = users.filter(phone_number.eq(searched_phone_number))
+        let phone_num: String = searched_phone_number.clone();
+        let results = users.filter(phone_number.eq(phone_num))
             .limit(1)
             .load::<User>(connection)
             .expect("ERR loading users");
