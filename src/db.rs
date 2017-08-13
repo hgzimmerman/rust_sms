@@ -7,7 +7,6 @@ use models::users::*;
 
 
 pub fn get_users() {
-
     use schema::users::dsl::*;
 
     let connection = establish_connection();

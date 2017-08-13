@@ -20,9 +20,9 @@ use simplelog::{Config, TermLogger, WriteLogger, CombinedLogger, LogLevelFilter}
 use std::fs::File;
 
 
-use rocket::{Request, Data, State };
-use rocket::data::{self};
-use rocket::http::{Status};
+use rocket::{ State };
+//use rocket::data::{self};
+//use rocket::http::{Status};
 use std::sync::Mutex;
 
 mod state_machine;
