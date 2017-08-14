@@ -86,26 +86,8 @@ fn main() {
     let client = create_client();
     let db_connection: PgConnection = db::establish_connection();
 //
-//    const HENRY_PHONE : &'static str = "+18472871920";
-//    match users::RealizedUser::get_user_by_phone_number(&HENRY_PHONE.to_string(), &db_connection) {
-//        None => {
-//            let henry: users::NewUser = users::NewUser::new("Henry".to_string(), "Zimmerman".to_string(), HENRY_PHONE.to_string());
-//            henry.db_insert(&db_connection);
-//        }
-//        Some(hen) => hen.db_update_state(SmState::StartState, &db_connection)
-//    }
-//
-//
-//    let realized_henry: users::RealizedUser = users::RealizedUser::get_user_by_phone_number(&HENRY_PHONE.to_string(), &db_connection).unwrap();
-//    let cloned_henry = realized_henry.clone();
-//
-//    let (new_state, message) = realized_henry.state.next(EventToken::BoatAttendanceInternalRequest { message: &"Do you want to do event at time?".to_string() });
-//    cloned_henry.db_update_state(new_state, &db_connection);
-//
-//
-//    send_message_to_user(&client, message.unwrap(), &cloned_henry);
-//
-//    db::get_users();// print out users in the system
+    db::initialize_test_user(&db_connection, &client);
+
 
 
     // The user store must be mutexed in order for the handle_input fn to be able to use it mutably (in a multi-thread env, you probably don't want simultaneous access to this global state)

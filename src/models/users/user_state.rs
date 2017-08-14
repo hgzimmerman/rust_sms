@@ -42,25 +42,24 @@ impl UserState {
                             // Cancel the event
                             (StartState, Some("You have canceled $event.".to_string()))
                         } else {
-                            (self.clone(), Some("You aren't attending an event with that number.".to_string()))
+                            (self, Some("You aren't attending an event with that number.".to_string()))
                         }
                     },
                     Err(_) => {
-                        (self.clone(), Some("Please enter a valid number.".to_string()))
+                        (self, Some("Please enter a valid number.".to_string()))
                     }
                 }
-            }
+            },
             (_, HelpRequest) => {
                 // send help message.
-                (self.clone(), Some("help message".to_string()))
+                (self, Some("help message".to_string()))
             },
             _ => {
                 // Let user know they had invalid input.
-                (self.clone(), Some("Invalid input".to_string()))
+                (self, Some("Invalid input".to_string()))
             }
         }
     }
-
 }
 
 
