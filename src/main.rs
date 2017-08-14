@@ -85,14 +85,14 @@ fn main() {
 
     let client = create_client();
     let db_connection: PgConnection = db::establish_connection();
-//
+
+    // For testing purposes, remove eventually.
     db::initialize_test_user(&db_connection, &client);
 
-
-    get_users();// print out users in the system
+    db::get_users(); // print out users in the system
 
     // This must be mutexed in order for the handle_input fn to be able to use it mutably (in a multi-thread environment, you probably don't want simultaneous access to this "global" state).
-    // Consider creating a connection pool that can be used by multiple threads.
+    // Consider creating a connection pool that can be used by multiple threads. (pool owns multiple mutexed connections, calling fn can grab one, lock it for its use)
     let mutexed_pg_connection: Mutex<PgConnection> = Mutex::new(db_connection);
 
     rocket::ignite()

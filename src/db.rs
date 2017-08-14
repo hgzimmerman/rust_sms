@@ -16,7 +16,7 @@ pub fn get_users() {
 
     info!("Listing all users:");
     for user in results {
-        info!("{:?}\n                ---------\n", user);
+        info!("{:?}\n                ---------", user);
     }
 }
 
