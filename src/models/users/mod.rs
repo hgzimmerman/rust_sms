@@ -7,7 +7,7 @@ use diesel;
 use diesel::prelude::*;
 
 /// Db interfaceable user
-#[derive(Queryable, Identifiable, Clone)]
+#[derive(Queryable, Identifiable, Clone, Debug)]
 pub struct User {
     pub id: i32,
     pub first_name: String,
@@ -54,7 +54,7 @@ impl NewUser {
 
 
 /// User
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RealizedUser {
     pub id: i32,
     pub first_name: String,

@@ -14,12 +14,9 @@ pub fn get_users() {
     let connection = establish_connection();
     let results = users.load::<User>(&connection).expect("ERR loading users");
 
+    info!("Listing all users:");
     for user in results {
-        println!("{}", user.id);
-        println!("{} {}", user.first_name, user.last_name);
-        println!("{}", user.phone_number);
-        println!("stateNum: {}", user.state);
-        println!("----------\n");
+        info!("{:?}\n                ---------\n", user);
     }
 }
 
@@ -34,7 +31,7 @@ pub fn establish_connection() -> PgConnection {
 
 
 /// Optionally add a user to the db if it doesn't exist yet, otherwise, set its state to the start state.
-/// Then
+/// Then get the user, and send them a message, and change their state.
 pub fn initialize_test_user(db_connection: &PgConnection, client: &Client ) {
     use state_machine::EventToken;
     use models::users;
@@ -58,5 +55,4 @@ pub fn initialize_test_user(db_connection: &PgConnection, client: &Client ) {
 
     send_message_to_user(client, message.unwrap(), &cloned_henry);
 
-    get_users();// print out users in the system
 }

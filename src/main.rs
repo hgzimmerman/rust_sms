@@ -89,9 +89,10 @@ fn main() {
     db::initialize_test_user(&db_connection, &client);
 
 
+    get_users();// print out users in the system
 
-    // The user store must be mutexed in order for the handle_input fn to be able to use it mutably (in a multi-thread env, you probably don't want simultaneous access to this global state)
-    // Mitigate this restriction when using the DB, by getting a connection pool, so the pool members can each be borrowed mutably, while the container doesn't have to be (not even sure if the db connections will be mutable in the first place)
+    // This must be mutexed in order for the handle_input fn to be able to use it mutably (in a multi-thread environment, you probably don't want simultaneous access to this "global" state).
+    // Consider creating a connection pool that can be used by multiple threads.
     let mutexed_pg_connection: Mutex<PgConnection> = Mutex::new(db_connection);
 
     rocket::ignite()
