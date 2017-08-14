@@ -1,6 +1,9 @@
 use state_machine::EventToken;
 
-#[derive(Debug, Clone, Copy)]
+
+pub struct UserStateType;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum UserState {
     StartState,
     AwaitingEventConfirmationState,
@@ -83,6 +86,59 @@ impl From<i32> for UserState {
             2 => ConfirmingCancellationState,
 
             _ => panic!("Tried to convert number {} to state", number)
+        }
+    }
+}
+
+use diesel::pg::Pg;
+use std::error::Error;
+use std::io::Write;
+use diesel::row::Row;
+use diesel::expression::AsExpression;
+use diesel::expression::bound::Bound;
+use diesel::types::FromSqlRow;
+use diesel::types::ToSqlOutput;
+use diesel::types::ToSql;
+use diesel::types::HasSqlType;
+use diesel::types::IsNull;
+use diesel::types::NotNull;
+
+
+impl HasSqlType<UserStateType> for Pg {
+    fn metadata(lookup: &Self::MetadataLookup) -> Self::TypeMetadata {
+        lookup.lookup_type("user_state_type")
+    }
+}
+
+impl NotNull for UserStateType {}
+
+impl<'a> AsExpression<UserStateType> for &'a UserState {
+    type Expression = Bound<UserStateType, &'a UserState>;
+
+    fn as_expression(self) -> Self::Expression {
+        Bound::new(self)
+    }
+}
+
+impl ToSql<UserStateType, Pg> for UserState {
+    fn to_sql<W: Write>(&self, out: &mut ToSqlOutput<W, Pg>) -> Result<IsNull, Box<Error+Send+Sync>> {
+        match *self {
+            UserState::StartState => out.write_all(b"startState")?,
+            UserState::AwaitingEventConfirmationState => out.write_all(b"awaitingEventConfirmationState")?,
+            UserState::ConfirmingCancellationState => out.write_all(b"confirmingCancellationState")?
+        }
+        Ok(IsNull::No)
+    }
+}
+
+impl FromSqlRow<UserStateType, Pg> for UserState {
+    fn build_from_row<T: Row<Pg>>(row: &mut T) -> Result<Self, Box<Error+Send+Sync>> {
+        match row.take() {
+            Some(b"startState") => Ok(UserState::StartState),
+            Some(b"awaitingEventConfirmationState") => Ok(UserState::AwaitingEventConfirmationState),
+            Some(b"confirmingCancellationState") => Ok(UserState::ConfirmingCancellationState),
+            Some(_) => Err("Unrecognized enum variant".into()),
+            None => Err("Unexpected null for non-null column".into()),
         }
     }
 }
