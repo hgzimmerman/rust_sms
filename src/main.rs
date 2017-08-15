@@ -1,6 +1,8 @@
 #![feature(const_fn)]
 #![feature(drop_types_in_const)] //Needed to have a statically accessible db connection //lazy static
-#![feature(plugin)]
+#![feature(custom_derive, custom_attribute, plugin)]
+
+#![plugin(diesel_codegen)]
 #![plugin(rocket_codegen)]
 
 #[macro_use] extern crate diesel;
@@ -43,6 +45,7 @@ mod schema; // The schema will auto-codegen the path for each table. This will c
 
 use models::users;
 use models::new_user_builders;
+use models::users::UserState;
 
 use diesel::pg::PgConnection;
 
