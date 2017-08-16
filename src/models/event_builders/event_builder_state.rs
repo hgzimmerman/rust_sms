@@ -1,5 +1,6 @@
 use diesel::pg::PgConnection;
 use state_machine::EventToken;
+use state_machine::State;
 
 use super::RealizedEventBuilder;
 
@@ -50,8 +51,8 @@ impl Into<i32> for EventBuilderState {
     }
 }
 
-impl EventBuilderState {
-    pub fn next(self, event: EventToken, builder: &RealizedEventBuilder, db_connection: PgConnection) -> (EventBuilderState, Option<String>) {
+impl State<RealizedEventBuilder> for EventBuilderState {
+    fn next(self, event: EventToken, builder: &RealizedEventBuilder, db_connection: PgConnection) -> (EventBuilderState, Option<String>) {
         (self, Some("Not implemented".to_string()))
     }
 }

@@ -4,6 +4,7 @@ use twilio_client_wrapper::SimpleTwimlMessage;
 use diesel::pg::PgConnection;
 use models::users::RealizedUser;
 use models::new_user_builders::RealizedNewUserBuilder;
+use std::marker::Sized;
 
 #[derive(Debug, Clone)]
 pub enum EventToken<'a> {
@@ -86,4 +87,8 @@ pub fn handle_input(twim: SimpleTwimlMessage, db_connection: &PgConnection) -> S
             }
         }
     }
+}
+
+pub trait State<T> {
+    fn next(self, event: EventToken, state_owning_struct: &T, db_connection: PgConnection) -> (Self, Option<String>) where Self: Sized;
 }
