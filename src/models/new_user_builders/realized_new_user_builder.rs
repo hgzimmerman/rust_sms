@@ -49,12 +49,14 @@ impl RealizedNewUserBuilder {
         };
 
         // Actually build the new user
-        Some( NewUser {
-            first_name: first_name,
-            last_name: last_name,
-            phone_number: self.phone_number,
-            state: UserState::StartState.into()
-        })
+        Some(
+            NewUser {
+                first_name: first_name,
+                last_name: last_name,
+                phone_number: self.phone_number,
+                state: UserState::StartState.into()
+            }
+        )
     }
 
     pub fn add_first_name(&mut self, first_name: String) {
