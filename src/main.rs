@@ -11,6 +11,7 @@ extern crate twilio;
 extern crate dotenv;
 extern crate regex;
 extern crate percent_encoding;
+extern crate chrono;
 
 #[macro_use]
 extern crate log;
@@ -21,8 +22,6 @@ use std::fs::File;
 
 
 use rocket::{ State };
-//use rocket::data::{self};
-//use rocket::http::{Status};
 use std::sync::Mutex;
 
 mod state_machine;
@@ -43,6 +42,7 @@ mod schema; // The schema will auto-codegen the path for each table. This will c
 
 use models::users;
 use models::new_user_builders;
+use models::events;
 
 use diesel::pg::PgConnection;
 

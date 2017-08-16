@@ -23,9 +23,12 @@ impl RealizedUser {
 
         let db_user: User = self.clone().into();
         let state_representation: i32 = new_state.into();
-        diesel::update(&db_user)
+        match diesel::update(&db_user)
             .set(state.eq(state_representation))
-            .execute(connection);
+            .execute(connection) {
+            Ok(_) => info!("db_update_state() - Updated {}'s state to {:?}", self.full_name(), new_state),
+            Err(e) => error!("db_update_state() - Failed to update {}'s state because: {}", self.full_name(), e)
+        }
     }
 
     /// Given a string representing a phone number, search the db for the corresponding user
@@ -43,6 +46,10 @@ impl RealizedUser {
             Some(user) => Some(RealizedUser::from(user.clone())),    // Clone the user to get ownership, the convert to the app based user
             None => None
         }
+    }
+
+    pub fn full_name(&self) -> String {
+        format!("{} {}", self.first_name, self.last_name)
     }
 }
 
