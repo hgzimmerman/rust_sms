@@ -9,7 +9,7 @@ use diesel;
 use diesel::prelude::*;
 
 /// Db interfaceable user
-#[derive(Queryable, Identifiable, Clone, Debug)]
+#[derive(Queryable, Identifiable, Clone, Debug, AsChangeset)]
 pub struct User {
     pub id: i32,
     pub first_name: String,

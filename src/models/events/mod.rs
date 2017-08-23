@@ -1,10 +1,12 @@
 use chrono::{NaiveDateTime};
-use schema::events;
+use schema::{events, users};
 use diesel;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 
-#[derive(Queryable, Identifiable, Clone, Debug, AsChangeset)]
+
+#[derive(Queryable, Identifiable, Associations, AsChangeset, Clone, Debug )]
+#[belongs_to(User)]
 pub struct Event {
     id: i32,
     pub title: String,
@@ -32,4 +34,23 @@ impl Event {
             .execute(connection)
             .expect("Error updating event.");
     }
+
+//    fn db_associate_user(&self, user: &User, connection: &PgConnection) {
+//        use schema::events;
+//
+//        let _ = diesel::insert(user)
+//            .into(events::table)
+//            .execute(connection)
+//            .expect("Failed to associate user with event.");
+//    }
+
+//    fn get_associated_users(&self, connection: &PgConnection) -> Option<Vec<User>> {
+//        use schema::events;
+//
+//        match User::belonging_to(self)
+//            .load::<User>(connection) {
+//            Ok(users) => Some(users),
+//            Err(_) => None
+//        }
+//    }
 }
