@@ -1,3 +1,9 @@
+# Description
+A chatbot that could be used to schedule ad-hoc rowing practices.
+
+# Development status
+Currently suspended due to Diesel.rs having trouble associating tables.
+
 # How to build:
 
 * `docker build -t archrustdevenv .`
